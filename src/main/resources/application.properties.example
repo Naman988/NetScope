@@ -1,0 +1,3 @@
+db.url=jdbc:mysql://localhost:3306/netscope
+db.username=netscope_app
+db.password=CHANGE_ME
