@@ -133,4 +133,42 @@ public final class FlowRepository {
             java.time.Instant firstSeen,
             java.time.Instant lastSeen
     ) {}
+
+    /**
+     * Reads back every flow currently stored.
+     *
+     * @return all flows, ordered by ID
+     * @throws PersistenceException if the query fails
+     */
+    public java.util.List<StoredFlow> findAll() {
+        String sql = "SELECT id, endpoint_a_ip, endpoint_a_port, endpoint_b_ip, endpoint_b_port, " +
+                "protocol, packet_count, byte_count, first_seen, last_seen " +
+                "FROM flows ORDER BY id";
+
+        java.util.List<StoredFlow> results = new java.util.ArrayList<>();
+
+        try (Connection connection = dataSourceProvider.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                results.add(new StoredFlow(
+                        resultSet.getLong("id"),
+                        resultSet.getString("endpoint_a_ip"),
+                        resultSet.getInt("endpoint_a_port"),
+                        resultSet.getString("endpoint_b_ip"),
+                        resultSet.getInt("endpoint_b_port"),
+                        Protocol.valueOf(resultSet.getString("protocol")),
+                        resultSet.getLong("packet_count"),
+                        resultSet.getLong("byte_count"),
+                        resultSet.getTimestamp("first_seen").toInstant(),
+                        resultSet.getTimestamp("last_seen").toInstant()
+                ));
+            }
+            return results;
+
+        } catch (SQLException e) {
+            throw new PersistenceException("Failed to read all flows", e);
+        }
+    }
 }
